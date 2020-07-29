@@ -1,0 +1,11 @@
+﻿  test.cpp
+D:\我的文件夹\文档\学术资料\C++程序设计\课设\图书管理系统GUI版\DLL for GUI\CreateDLL\test.cpp(40): warning C4172: 返回局部变量或临时变量的地址: b
+D:\我的文件夹\文档\学术资料\C++程序设计\课设\图书管理系统GUI版\DLL for GUI\CreateDLL\test.cpp(136): warning C4172: 返回局部变量或临时变量的地址: charString
+D:\我的文件夹\文档\学术资料\C++程序设计\课设\图书管理系统GUI版\DLL for GUI\CreateDLL\test.cpp(89): warning C4172: 返回局部变量或临时变量的地址: charString
+D:\我的文件夹\文档\学术资料\C++程序设计\课设\图书管理系统GUI版\DLL for GUI\CreateDLL\test.cpp(183): warning C4172: 返回局部变量或临时变量的地址: charString
+D:\我的文件夹\文档\学术资料\C++程序设计\课设\图书管理系统GUI版\DLL for GUI\CreateDLL\test.cpp(230): warning C4172: 返回局部变量或临时变量的地址: charString
+D:\我的文件夹\文档\学术资料\C++程序设计\课设\图书管理系统GUI版\DLL for GUI\CreateDLL\test.cpp(297): warning C4172: 返回局部变量或临时变量的地址: charString
+D:\我的文件夹\文档\学术资料\C++程序设计\课设\图书管理系统GUI版\DLL for GUI\CreateDLL\test.cpp(478): warning C4172: 返回局部变量或临时变量的地址: charString
+D:\我的文件夹\文档\学术资料\C++程序设计\课设\图书管理系统GUI版\DLL for GUI\CreateDLL\library.h(157): warning C4715: “BookData::operator=”: 不是所有的控件路径都返回值
+    正在创建库 D:\我的文件夹\文档\学术资料\C++程序设计\课设\图书管理系统GUI版\DLL for GUI\CreateDLL\x64\Debug\CreateDLL.lib 和对象 D:\我的文件夹\文档\学术资料\C++程序设计\课设\图书管理系统GUI版\DLL for GUI\CreateDLL\x64\Debug\CreateDLL.exp
+  CreateDLL.vcxproj -> D:\我的文件夹\文档\学术资料\C++程序设计\课设\图书管理系统GUI版\DLL for GUI\CreateDLL\x64\Debug\CreateDLL.dll
