@@ -22,14 +22,13 @@
 
 
 ## 二、系统的总框架图
-![image.png](https://i.loli.net/2020/07/29/RH9TWurJzl1KQXV.png)
-
+<img src="https://i.loli.net/2020/07/29/RH9TWurJzl1KQXV.png" alt="image.png" style="zoom:67%;" />
 需要说明的是，“C++项目”，“动态链接库”，“可供Python直接调用的静态方法”，“Python项目->GUI”分别对应于`CreateDLL文件夹`，`CreateDLL.dll`，`library.py`和`GUI.py`。其中`GUI.py`是最终的启动程序。
 
 ## 三、UI控件结构
 使用PyQt5编写的UI，主体控件之间的排布如下：
 
-![image.png](https://i.loli.net/2020/07/30/hKoXt3ASY7BElkR.png)
+<img src="https://i.loli.net/2020/07/30/hKoXt3ASY7BElkR.png" alt="image.png" style="zoom:67%;" />
 
 
 
