@@ -19,7 +19,7 @@ class QBookManagement(QWidget):
         self.font_family = self.config_dict['font-family']   # 字体类型
         self.font_size = self.config_dict['font-size']   # 字体大小
 
-        self.setWindowTitle("图书管理系统1.01")
+        self.setWindowTitle("图书管理系统1.02")
         self.resize(1800, 1200)
 
         # 几个会用到的变量
@@ -69,6 +69,8 @@ class QBookManagement(QWidget):
         self.stack.addWidget(self.stack2)
         self.stack.addWidget(self.stack3)
 
+
+
         # 下三个函数用来为堆栈中的子页面添加控件
         self.initStack1UI()
         self.initStack2UI()
@@ -92,12 +94,7 @@ class QBookManagement(QWidget):
         mainLay.setStretch(0, 1)    # 设置左右宽比例
         mainLay.setStretch(1, 7)
         # 加入QSplitter来使得边界可以拖动
-        """
-        splitter = QSplitter(Qt.Horizontal)
-        splitter.addWidget(self.list)
-        splitter.addWidget(self.stack)
-        globalLayout.addWidget(splitter)
-        """
+
         globalLayout.addLayout(mainLay)
 
         # 第四层(状态栏)
@@ -109,17 +106,26 @@ class QBookManagement(QWidget):
         # 槽函数负责让堆栈对应发生改变，切换到相应的页面
         self.list.currentRowChanged.connect(self.changeSubUI)
 
+        # 设置控件透明度
+        self.setWidgetOpacity()
+
+
     def init3Bar(self):
         # 菜单栏
-        file_label = self.menuBar.addMenu("文件")
+
+        self.file_label = self.menuBar.addMenu("文件")
         self.actionOpen = QAction("打开")
         self.actionPrint = QAction("打印")
-        file_label.addActions([self.actionOpen, self.actionPrint])
+        self.file_label.addActions([self.actionOpen, self.actionPrint])
 
-        edit_label = self.menuBar.addMenu("编辑")
+        self.edit_label = self.menuBar.addMenu("编辑")
         self.actionFont = QAction("字体设置")
         self.changeTex = QAction("修改税率")
-        edit_label.addActions([self.actionFont, self.changeTex])
+        self.edit_label.addActions([self.actionFont, self.changeTex])
+        # 菜单栏字体设置
+        self.menuBar.setFont(QFont("Microsoft YaHei", 11))
+        self.file_label.setFont(QFont("Microsoft YaHei", 11))
+        self.edit_label.setFont(QFont("Microsoft YaHei", 11))
 
         # 工具栏
         self.toolOpen = QAction(QIcon("./icon/open.ico"), "打开(open)")
@@ -127,7 +133,7 @@ class QBookManagement(QWidget):
         self.toolFont = QAction(QIcon("./icon/font.ico"), "字体设置(font set)")
         self.toolCopy = QAction(QIcon("./icon/copy.ico"), "复制(copy)")
         self.toolPaste = QAction(QIcon("./icon/paste.ico"), "粘贴(paste)")
-        self.toolShopCart = QAction(QIcon("./icon/shopCartTool.ico"), "购物车")
+        self.toolShopCart = QAction(QIcon("./icon/shopCartTool.ico"), "购物车(shopping cart)")
 
         self.toolBar.addActions([self.toolOpen, self.toolPrint, self.toolFont, self.toolCopy, self.toolPaste, self.toolShopCart])
 
@@ -151,6 +157,8 @@ class QBookManagement(QWidget):
         self.searchEdit = QLineEdit()
         self.searchEdit.setPlaceholderText("请输入书本的ISBN号")  # 灰色提示信息
         self.searchEdit.setFont(self.globalFont)
+
+
         # 使用正则表达式设计校验器
         reg = QRegExp("^[0-9-]+$")
         val = QRegExpValidator(self)
@@ -161,19 +169,23 @@ class QBookManagement(QWidget):
         self.searchbutton.setIconSize(QSize(40, 40))
         self.searchbutton.setFont(self.globalFont)
 
+
         # 加入呈现结果的表格控件
         self.searchTable = QTableWidget()
+
         #self.stack1_table.setFixedHeight(900)
         self.searchTable.setColumnCount(8)
         self.searchTable.setHorizontalHeaderLabels(["ISBN号", "书名", "作者", "出版社", "进书日期", "库存量", "批发价(元/本)", "零售价(元/本)"])
         self.searchTable.setEditTriggers(QAbstractItemView.NoEditTriggers)     # 设置成不可编辑
         self.searchTableHeader = self.searchTable.horizontalHeader()  # 获取横向表格头对象
 
+
         # 外观设置
         self.searchTableHeader.setSectionResizeMode(QHeaderView.Stretch)  # 让表格和外框同宽
         # 将横向表头字体和表格内容的字体都改成全局字体
         self.searchTableHeader.setFont(self.globalFont)
         self.searchTable.setFont(self.globalFont)
+
 
         # 加入最后购物车按钮和购买按钮
         self.shopCartButton = QPushButton(QIcon("./icon/shopCart.ico") ,"加入购物车")
@@ -182,6 +194,7 @@ class QBookManagement(QWidget):
         self.buyButton.setFont(self.globalFont)
         self.shopCartButton.setIconSize(QSize(40, 40))
         self.buyButton.setIconSize(QSize(40, 40))
+
 
         # 将上述所有控件添加进入布局中
         globalLay = QVBoxLayout()
@@ -1022,6 +1035,13 @@ class QBookManagement(QWidget):
         self.statusBar.setFont(self.globalFont)
         self.statusBar.showMessage("字体刷新完成")
 
+    def setWidgetOpacity(self):
+        # 设置控件透明度
+        self.op = QGraphicsOpacityEffect()
+        self.op.setOpacity(0.8)
+
+
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon("./icon/app.ico"))
@@ -1029,11 +1049,45 @@ if __name__ == "__main__":
 
     # QSS样式表
     qssStyle = """
-        QTextTable[name="PrintTable"] {
-            font-size: 15px;
-            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
-        } 
+    
+        QPushButton {
+            background-color: rgba(153, 153, 255, 90%);
+            border: 3px solid rgba(182, 159, 211, 0%);
+            color: white;
+        }
+        QPushButton:hover {
+            background-color: rgba(219, 217, 255, 100%);
+        }
+        
+        QMenuBar {
+             background-color: rgba(240, 248, 255, 0%);
+        }
+        
+        QLineEdit {
+            background-color: rgba(255, 255, 255, 85%);
+        }
+        
+        QTableWidget {
+            background-color: rgba(255, 255, 255, 85%);
+        }
+        
+        QListWidget{
+            background-color: rgba(255, 255, 255, 85%);
+        }
+        
+        QListWidgetItem:hover {
+            background-color: rgba(239, 227, 255, 100%);
+        }
     """
+
+    # 设置背景图片
+    palette = QPalette()
+    image = QPixmap("./icon/stardust.jpg")
+    image = image.scaled(book.width(), book.height())
+    palette.setBrush(book.backgroundRole(), QBrush(image))
+    book.setPalette(palette)
+
+    # 设置QSS样式表
     book.setStyleSheet(qssStyle)
     book.show()
     sys.exit(app.exec_())
