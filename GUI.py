@@ -4,30 +4,43 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtPrintSupport import *
 from library import *
+from json import load, dump
 
 class QBookManagement(QWidget):
     def __init__(self):
         super(QBookManagement, self).__init__()
 
-        self.setWindowTitle("图书管理系统1.0")
+        # 系统配置参数，包括字体属性，税率
+        # 先从json文件中读取数据
+        with open("./config.json", "r", encoding="utf-8") as f:
+            self.config_dict = load(f)
+            f.close()
+        self.tex =  self.config_dict['tex']# 税率
+        self.font_family = self.config_dict['font-family']   # 字体类型
+        self.font_size = self.config_dict['font-size']   # 字体大小
+
+        self.setWindowTitle("图书管理系统1.01")
         self.resize(1800, 1200)
 
         # 几个会用到的变量
         self.currentFileName = ""    # 当前打开的文件名称
         self.currentFilePath  = ""    # 当前打开的文件的路径
+
+        # 全局字体对象
         self.globalFont = QFont()   # 全局字体对象
-        self.globalFont.setFamily("UD Digi Kyokasho NK-R")
-        self.globalFont.setPointSize(15)
+        self.globalFont.setFamily(self.font_family)
+        self.globalFont.setPointSize(self.font_size)
         self.shopCart = []       # 购物车，显示当前已经放入的书本
         self.shopCart_ISBN_Qty = []  # 购物车里面的书对应的ISBN号和库存量
-        self.tex = 0.05  # 税率
 
         # 添加菜单栏，工具栏和状态栏
         self.menuBar = QMenuBar()
         self.toolBar = QToolBar()
         self.statusBar = QStatusBar()
-        self.barFont = QFont()   # 全局字体对象
-        self.barFont.setFamily("UD Digi Kyokasho NK-R")
+
+        # 设置状态栏字体
+        self.barFont = QFont()
+        self.barFont.setFamily(self.font_family)
         self.barFont.setPointSize(12)
         self.statusBar.setFont(self.barFont)
 
@@ -354,25 +367,65 @@ class QBookManagement(QWidget):
         self.statusBar.showMessage("打开{}路径下的文件".format(self.currentFilePath))
 
     def toolPrintSlot(self):    # 点击菜单栏的“打印”或者工具栏的“打印”按钮触发的槽函数
-        self.printer = QPrinter  # 打印机对象
-        printDialog = QPrintDialog()
+        """
+        功能限制，这个函数负责打印report表格
+        先构建打印机对象，然后通过QTextCursor往富文本中添加表格，并填充表格
+        :return:
+        """
+        printer = QPrinter()  # 打印机对象，存储打印指令
+        printDialog = QPrintDialog(printer)    # 通过打印对话框获取打印指令
+
         # 判断是否正常执行打印机命令
         if QDialog.Accepted == printDialog.exec():
-            self.reportTable.print(self.printer)
+
+            document = QTextDocument()
+            cursor = QTextCursor(document)
+            table = cursor.insertTable(self.book_num + 1, 8)
+            table.setProperty("name", "PrintTable")
+
+
+            header = ["ISBN号", "书名", "作者", "出版社", "进书日期", "库存量", "批发价(元/本)", "零售价(元/本)"]
+            # 先写表头
+            for i in range(8):
+                cursor.insertText(header[i])
+                cursor.movePosition(QTextCursor.NextCell)
+
+            for i in range(self.book_num):
+                for j in range(8):
+                    cursor.insertText(self.reportTable.item(i, j).text())
+                    cursor.movePosition(QTextCursor.NextCell)
+            document.print(printer)
 
         self.statusBar.showMessage("执行打印机指令")
 
     def toolFontSlot(self):     # 点击菜单栏的“字体”或者工具栏的“字体”按钮触发的槽函数
+        print("enter font change")
         fontDialog = QFontDialog()
         font, ok = fontDialog.getFont()
+        print(font.key())
+        print(type(font.key()))
+
         if ok:
+            print("font has been choosen")
             self.globalFont = font
+
+            # 将获取的字体的大小和字体类型储存在全局字典config_dict中
+            self.config_dict['font-famliy'] = font.family()
+            self.config_dict['font-size'] = font.pointSize()
+
+            # 将全局字典存入json文件中，即永久保存配置参数
+            with open("./config.json", "w", encoding="utf-8") as f:
+                    dump(self.config_dict, f)
+
             self.refresh()
 
     def toolCopySlot(self):     # 复制当前单元格中的内容
         clipboard = QApplication.clipboard()
-        clipboard.setText(self.currentItemText)
-        self.statusBar.showMessage(f"已将{self.currentItemText}复制到剪贴板")
+        try:
+            clipboard.setText(self.currentItemText)
+            self.statusBar.showMessage(f"已将\"{self.currentItemText}\"复制到剪贴板")
+        except:
+            QMessageBox.warning(self, "警告", "请选中单元格再按下此按钮！")
 
     def toolPasteSlot(self):
         row = self.list.currentRow()
@@ -385,11 +438,14 @@ class QBookManagement(QWidget):
             self.searchEdit.setText(clipboard.text())
             self.statusBar.showMessage("粘贴成功")
 
-    def changeTexSlot(self):
+    def changeTexSlot(self):    # 修改税率的函数，并存入配置文件中
         tex, ok = QInputDialog.getDouble(self, "修改税率", "请输入税率(0-1)", self.tex, 0, 1, 3)
         if ok:
             self.tex = tex
-            self.statusBar.showMessage(f"当前税率已修改为{tex}")
+            self.config_dict['tex'] = tex
+            with open("./config.json", "w", encoding="utf-8") as f:
+                dump(self.config_dict, f)
+            self.statusBar.showMessage(f"当前税率已修改为{tex},配置参数保存完毕")
         else:
             self.statusBar.showMessage("您取消了修改税率的操作")
 
@@ -465,7 +521,6 @@ class QBookManagement(QWidget):
 
         else:
             QMessageBox.information(self, "提示", "请输入内容呀亲")
-
 
     def shopCartButtonSlot(self):
         # 如果此处不异常处理，那么如果用户在没有选中书的情况下选中按钮，那么会报错
@@ -871,8 +926,6 @@ class QBookManagement(QWidget):
         self.statusBar.showMessage(f"当前单元格中的内容：{item}")
         self.currentItemText = item
 
-
-
     """
     第四块槽函数：报表模块的槽函数
     """
@@ -938,6 +991,7 @@ class QBookManagement(QWidget):
     第五块槽函数：系统函数
     """
     def refresh(self):  # 刷新字体
+        print("refresh the UI")
         self.list.setFont(self.globalFont)
 
         # 收银模块的控件
@@ -949,20 +1003,37 @@ class QBookManagement(QWidget):
         self.buyButton.setFont(self.globalFont)
 
         # 书库管理模块的控件
+        self.queryEdit.setFont(self.globalFont)
+        self.querybutton.setFont(self.globalFont)
+        self.queryTableHeader.setFont(self.globalFont)
+        self.queryTable.setFont(self.globalFont)
+        self.addButton.setFont(self.globalFont)
+        self.modifyButton.setFont(self.globalFont)
+        self.deleteButton.setFont(self.globalFont)
 
         # 报表模块的控件
         self.sortStyleComBox.setFont(self.globalFont)
-        self.AsendingOrderButton.setFont(self.globalFont)
+        self.AscendingOrderButton.setFont(self.globalFont)
         self.DescendingOrderButton.setFont(self.globalFont)
         self.reportTableHeader.setFont(self.globalFont)
         self.reportTable.setFont(self.globalFont)
 
-
+        # 状态栏的字体
+        self.statusBar.setFont(self.globalFont)
         self.statusBar.showMessage("字体刷新完成")
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     app.setWindowIcon(QIcon("./icon/app.ico"))
     book = QBookManagement()
+
+    # QSS样式表
+    qssStyle = """
+        QTextTable[name="PrintTable"] {
+            font-size: 15px;
+            font-family: 'Franklin Gothic Medium', 'Arial Narrow', Arial, sans-serif;
+        } 
+    """
+    book.setStyleSheet(qssStyle)
     book.show()
     sys.exit(app.exec_())
