@@ -11,20 +11,31 @@ class QBookManagement(QWidget):
         super(QBookManagement, self).__init__()
 
         # 系统配置参数，包括字体属性，税率
-        # 先从json文件中读取数据
+        # 先从json文件中读取数据，通过配置文件中的参数来初始化系统
         with open("./config.json", "r", encoding="utf-8") as f:
             self.config_dict = load(f)
             f.close()
+
         self.tex =  self.config_dict['tex']# 税率
         self.font_family = self.config_dict['font-family']   # 字体类型
         self.font_size = self.config_dict['font-size']   # 字体大小
+        self.background_picture = self.config_dict['background-picture']    # 背景图片
 
+        # 根据配置参数设置窗口的标题，背景图片，系统字体等
         self.setWindowTitle("图书管理系统1.02")
         self.resize(1800, 1200)
+
+        # 设置背景图片
+        palette = QPalette()
+        image = QPixmap(self.background_picture)
+        image = image.scaled(self.width(), self.height())
+        palette.setBrush(self.backgroundRole(), QBrush(image))
+        self.setPalette(palette)
 
         # 几个会用到的变量
         self.currentFileName = ""    # 当前打开的文件名称
         self.currentFilePath  = ""    # 当前打开的文件的路径
+        self.currentModule = "reception"   # 当前所在的模块
 
         # 全局字体对象
         self.globalFont = QFont()   # 全局字体对象
@@ -47,18 +58,6 @@ class QBookManagement(QWidget):
         # 为菜单栏，工具栏和状态栏添加控件与方法
         self.init3Bar()
 
-        # 创建列表控件，也就是左侧的列表
-        self.list = QListWidget()
-        self.item1 = QListWidgetItem(QIcon("./icon/mod1.ico"), "收银")
-        self.item2 = QListWidgetItem(QIcon("./icon/mod2.ico"), "图书管理")
-        self.item3 = QListWidgetItem(QIcon("./icon/mod3.ico"), "报表")
-        self.list.insertItem(0, self.item1)
-        self.list.insertItem(1, self.item2)
-        self.list.insertItem(2, self.item3)
-        # 更改字体
-        self.list.setFont(self.globalFont)
-        #self.list.setFixedWidth(200)
-
         # 创建堆栈窗口控件，也就是右侧的显示空间
         # 创建三个子页面，并将三个子页面载入
         self.stack = QStackedWidget()
@@ -68,8 +67,6 @@ class QBookManagement(QWidget):
         self.stack.addWidget(self.stack1)
         self.stack.addWidget(self.stack2)
         self.stack.addWidget(self.stack3)
-
-
 
         # 下三个函数用来为堆栈中的子页面添加控件
         self.initStack1UI()
@@ -89,11 +86,10 @@ class QBookManagement(QWidget):
 
         # 第三层(主控件)
         mainLay = QHBoxLayout()
-        mainLay.addWidget(self.list)
+        #mainLay.addWidget(self.list)
         mainLay.addWidget(self.stack)
-        mainLay.setStretch(0, 1)    # 设置左右宽比例
-        mainLay.setStretch(1, 7)
-        # 加入QSplitter来使得边界可以拖动
+        #mainLay.setStretch(0, 20)    # 设置左右宽比例
+        #mainLay.setStretch(1, 1)
 
         globalLayout.addLayout(mainLay)
 
@@ -101,14 +97,6 @@ class QBookManagement(QWidget):
         globalLayout.addWidget(self.statusBar)
 
         self.setLayout(globalLayout)
-
-        # 为列表触发的信号（选中的标签行数发生变化）添加槽函数
-        # 槽函数负责让堆栈对应发生改变，切换到相应的页面
-        self.list.currentRowChanged.connect(self.changeSubUI)
-
-        # 设置控件透明度
-        self.setWidgetOpacity()
-
 
     def init3Bar(self):
         # 菜单栏
@@ -118,7 +106,7 @@ class QBookManagement(QWidget):
         self.actionPrint = QAction("打印")
         self.file_label.addActions([self.actionOpen, self.actionPrint])
 
-        self.edit_label = self.menuBar.addMenu("编辑")
+        self.edit_label = self.menuBar.addMenu("设置")
         self.actionFont = QAction("字体设置")
         self.changeTex = QAction("修改税率")
         self.edit_label.addActions([self.actionFont, self.changeTex])
@@ -135,22 +123,38 @@ class QBookManagement(QWidget):
         self.toolPaste = QAction(QIcon("./icon/paste.ico"), "粘贴(paste)")
         self.toolShopCart = QAction(QIcon("./icon/shopCartTool.ico"), "购物车(shopping cart)")
 
-        self.toolBar.addActions([self.toolOpen, self.toolPrint, self.toolFont, self.toolCopy, self.toolPaste, self.toolShopCart])
+        # 在工具栏中添加三个模块跳转的按钮
+        self.skip_to_reception_module = QAction(QIcon("./icon/mod1.ico"), "跳转到收银模块")
+        self.skip_to_management_module = QAction(QIcon("./icon/mod2.ico"), "跳转到管理模块")
+        self.skip_to_report_module = QAction(QIcon("./icon/mod3.ico"), "跳转到报表模块")
+
+        self.toolBar.setToolTip("工具栏")
+        self.toolBar.addActions([self.skip_to_reception_module, self.skip_to_management_module, self.skip_to_report_module])
+        self.toolBar.addSeparator()
+        self.toolBar.addActions([self.toolOpen, self.toolPrint, self.toolFont])
+        self.toolBar.addSeparator()
+        self.toolBar.addActions([self.toolCopy, self.toolPaste, self.toolShopCart])
 
         # 状态栏
         # 平常显示目前打开的文件
 
         # 连接一些信号和槽
-        self.actionOpen.triggered.connect(self.toolOpenSlot)
-        self.actionPrint.triggered.connect(self.toolPrintSlot)
-        self.actionFont.triggered.connect(self.toolFontSlot)
-        self.changeTex.triggered.connect(self.changeTexSlot)
-        self.toolOpen.triggered.connect(self.toolOpenSlot)
-        self.toolPrint.triggered.connect(self.toolPrintSlot)
-        self.toolFont.triggered.connect(self.toolFontSlot)
-        self.toolCopy.triggered.connect(self.toolCopySlot)
-        self.toolPaste.triggered.connect(self.toolPasteSlot)
-        self.toolShopCart.triggered.connect(self.displayShopCart)
+        # 菜单栏的按钮
+        self.actionOpen.triggered.connect(self.toolOpenSlot)    # 打开文件
+        self.actionPrint.triggered.connect(self.toolPrintSlot)      # 打印
+        self.actionFont.triggered.connect(self.toolFontSlot)    # 设置字体
+        self.changeTex.triggered.connect(self.changeTexSlot)    # 设置税率
+
+        # 工具栏的按钮
+        self.skip_to_reception_module.triggered.connect(self.skip_to_reception)
+        self.skip_to_management_module.triggered.connect(self.skip_to_management)
+        self.skip_to_report_module.triggered.connect(self.skip_to_report)
+        self.toolOpen.triggered.connect(self.toolOpenSlot)  # 打开文件
+        self.toolPrint.triggered.connect(self.toolPrintSlot)    # 打印功能
+        self.toolFont.triggered.connect(self.toolFontSlot)      # 设置字体
+        self.toolCopy.triggered.connect(self.toolCopySlot)      # 复制按钮
+        self.toolPaste.triggered.connect(self.toolPasteSlot)    # 粘贴按钮
+        self.toolShopCart.triggered.connect(self.displayShopCart)   # 查看购物车按钮
 
     def initStack1UI(self): # 第一个窗口，“收银”
         # 先添加搜索用的编辑条和按钮
@@ -354,12 +358,29 @@ class QBookManagement(QWidget):
         self.DescendingOrderButton.clicked.connect(self.DescendSlot)
         self.reportTable.itemClicked.connect(self.displayReportTableItem)
 
+    """
     def changeSubUI(self, index):
         # 根据list发出的改变到的行数，堆栈窗口会做出改变
         self.stack.setCurrentIndex(index)
         # 并且根据初始化的需要，在状态栏上显示些什么
         if index == 2:
             self.statusBar.showMessage("初始化呈现方式共得到{}个结果".format(self.book_num))
+    """
+
+    def skip_to_reception(self):
+        self.stack.setCurrentIndex(0)
+        self.currentModule = "reception"
+        self.statusBar.showMessage("进入收银模块")
+
+    def skip_to_management(self):
+        self.stack.setCurrentIndex(1)
+        self.currentModule = "management"
+        self.statusBar.showMessage("进入管理模块")
+
+    def skip_to_report(self):
+        self.stack.setCurrentIndex(2)
+        self.currentModule = "report"
+        self.statusBar.showMessage("初始化呈现方式共得到{}个结果".format(self.book_num))
 
     """
     第一块槽函数：工具栏和菜单栏QAction控件的槽函数
@@ -441,13 +462,9 @@ class QBookManagement(QWidget):
             QMessageBox.warning(self, "警告", "请选中单元格再按下此按钮！")
 
     def toolPasteSlot(self):
-        row = self.list.currentRow()
         clipboard = QApplication.clipboard()
         # 本GUI中可供粘贴的地方只有两处：两个搜索框处
-        if row == 0:
-            self.searchEdit.setText(clipboard.text())
-            self.statusBar.showMessage("粘贴成功")
-        elif row == 1:
+        if self.currentModule == "reception" or self.currentModule == "management":
             self.searchEdit.setText(clipboard.text())
             self.statusBar.showMessage("粘贴成功")
 
@@ -1035,12 +1052,6 @@ class QBookManagement(QWidget):
         self.statusBar.setFont(self.globalFont)
         self.statusBar.showMessage("字体刷新完成")
 
-    def setWidgetOpacity(self):
-        # 设置控件透明度
-        self.op = QGraphicsOpacityEffect()
-        self.op.setOpacity(0.8)
-
-
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
@@ -1078,16 +1089,32 @@ if __name__ == "__main__":
         QListWidgetItem:hover {
             background-color: rgba(239, 227, 255, 100%);
         }
+        
+        QComboBox {
+            background-color: rgba(153, 153, 255, 90%);
+            border: 3px solid rgba(182, 159, 211, 0%);
+            color: white;
+        }
+        
+        QComboBox:hover {
+            background-color: rgba(219, 217, 255, 90%);
+        }
+        
+        QListWidgetItem {
+            background-color: rgba(239, 227, 255, 80%);
+        }
+        
+        QStatusBar:hover {
+            background-color: rgba(199, 197, 255, 50%);
+        }
+        
     """
-
-    # 设置背景图片
-    palette = QPalette()
-    image = QPixmap("./icon/stardust.jpg")
-    image = image.scaled(book.width(), book.height())
-    palette.setBrush(book.backgroundRole(), QBrush(image))
-    book.setPalette(palette)
 
     # 设置QSS样式表
     book.setStyleSheet(qssStyle)
     book.show()
     sys.exit(app.exec_())
+
+# 还未完成的事：
+# 1.设置背景图片的按钮，要求，写入配置文件，如果用户使用了别的图片，要求把图片复制到imgae文件夹下
+# 2.去掉QListWidget控件组，仿照SV2的UI设计将页面切换的按钮组写在右侧
