@@ -14,10 +14,13 @@
 
 
 > 下面是GUI展示
++ version 1.00
 
 <img src="https://i.loli.net/2020/07/29/31m75GZn2dWUyuh.png" alt="image.png" style="zoom:67%;" />
 
++ version 1.02
 
+<img src="https://i.loli.net/2020/08/22/wTqIOQ5DvM7r94j.png" alt="image.png" style="zoom:67%;" />
 
 
 
